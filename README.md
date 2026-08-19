@@ -42,8 +42,8 @@ Admin: `/admin` `/admin/components` `/admin/models` `/admin/orders` …
 ## Quick start
 
 ```bash
-git clone https://github.com/SanthoshKumarJayakumar/PC.git
-cd PC
+git clone https://github.com/mrrokesh/PC-Build.git
+cd PC-Build
 cp .env.example .env   # Windows: copy .env.example .env
 ```
 
@@ -139,4 +139,5 @@ Do not reuse the example JWT secrets.
 
 ## License
 
-Private project unless the repository owner states otherwise.
+See [LICENSE](./LICENSE). Private project unless the repository owner states otherwise.
+
