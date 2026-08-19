@@ -119,19 +119,38 @@ Two valid setups:
 
 The Hobby plan only deploys commits authored by the Vercel project owner on a private repo.
 
-Catalog/auth still need a separately hosted API. `CLIENT_URL` on the server must match the Vercel domain.
+**Connect Vercel (site) to Render (API)**
 
-**Backend (Render / Railway / Fly / ECS)**
+The browser and the API are on different domains, so both sides must know each other.
 
-- Start: `node server/src/index.js`  
-- `npx prisma migrate deploy` on release  
-- Seed only on an empty database  
+1. On **Vercel → Settings → Environment Variables** (Production), set:
 
-**Required production env**
+   | Key | Value |
+   | --- | --- |
+   | `VITE_API_URL` | Render origin, e.g. `https://your-service.onrender.com` (no trailing slash) |
 
-`DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `CLIENT_URL`, `COOKIE_SECURE=true`, `NODE_ENV=production`
+   Vite bakes this in at **build** time. After saving, **Redeploy** the frontend.
 
-Do not reuse the example JWT secrets.
+2. On **Render → Environment**, set:
+
+   | Key | Value |
+   | --- | --- |
+   | `NODE_ENV` | `production` |
+   | `DATABASE_URL` | Render Postgres URL |
+   | `CLIENT_URL` | Exact Vercel origin, e.g. `https://your-app.vercel.app` (no trailing slash). Add more with commas if you use a custom domain. |
+   | `JWT_SECRET` | long random string (not the example) |
+   | `JWT_REFRESH_SECRET` | different long random string |
+   | `COOKIE_SECURE` | `true` |
+   | `COOKIE_SAMESITE` | `none` (required for cookies across Vercel → Render) |
+   | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | your admin login |
+   | `PORT` | leave unset — Render injects it |
+
+3. Render start command: `npx prisma migrate deploy && npx prisma generate && node server/src/index.js`  
+   Seed once on an empty database: `npm run db:seed`
+
+4. Check the join: open `https://your-service.onrender.com/api/health` (`db` should be `up`), then reload the Vercel site. Catalog and login should hit Render.
+
+Do not reuse the example JWT secrets. Never commit `.env`.
 
 ## Troubleshooting
 

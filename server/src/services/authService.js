@@ -24,8 +24,8 @@ export function setAuthCookies(res, access, refresh) {
 }
 
 export function clearAuthCookies(res) {
-  res.clearCookie("kaelon_access", { path: "/" });
-  res.clearCookie("kaelon_refresh", { path: "/" });
+  res.clearCookie("kaelon_access", { ...cookieOpts });
+  res.clearCookie("kaelon_refresh", { ...cookieOpts });
 }
 
 export function publicUser(user) {
