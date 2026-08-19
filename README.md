@@ -167,6 +167,7 @@ Do not reuse the example JWT secrets. Never commit `.env`.
 
 | Symptom | Fix |
 | --- | --- |
+| Render OOM / Vite on `:5173` | Start command is `npm run dev`. Set it to `npm start` (API only). Do not run Vite on Render. |
 | `db: down` | Postgres not running or `DATABASE_URL` wrong |
 | Auth loops | `CLIENT_URL` must match the site origin; cookies `SameSite=Lax` |
 | Blank 3D | WebGL blocked — lists and checkout still work |
