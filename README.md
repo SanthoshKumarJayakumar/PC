@@ -1,134 +1,142 @@
 # Kaelon
 
-Premium 3D custom-PC configurator and e-commerce platform.
+Premium 3D custom-PC configurator and storefront.
 
 > See the machine before you own it.
 
-Choose a component → the PC updates in 3D → compatibility, wattage, and GST pricing recalculate on the server → save, share, checkout.
+Pick a part → the glass-side PC updates in 3D → the server checks compatibility, wattage, and GST → save, share, or checkout.
 
-This is a real stack: **Vite/React → Express REST → Prisma → PostgreSQL**. Prices, stock, roles, and compatibility are never trusted from the browser.
-
-NukePC was used only as workflow inspiration. Branding, copy, SKUs, and 3D assets are original.
-
-## Architecture
-
-```text
-Frontend (Vite + React + R3F)
-   ↓  REST /api  cookies
-Backend (Express)
-   ↓
-Prisma ORM
-   ↓
-PostgreSQL
-```
-
-- **Build state:** Zustand (`client/src/store/buildStore.js`)
-- **Catalog/cart/orders:** TanStack Query
-- **3D:** React Three Fiber. Parts are independent nodes. Transforms come from `Component3DModel` in the database.
-- **Placeholders:** procedural PBR meshes until production GLBs are attached (admin can set `modelUrl`)
+NukePC inspired the **workflow** only. Branding, copy, SKUs, and 3D meshes are original. There are no licensed manufacturer GLBs in this repo; the viewer uses a detailed procedural rig until you attach production models in admin.
 
 ## Stack
 
-- Client: React 19, Vite, React Router, Three.js, R3F, Drei, Zustand, TanStack Query
-- Server: Node, Express, JWT HTTP-only cookies, bcrypt, Helmet, CORS, rate limiting, express-validator
-- Data: PostgreSQL 17 + Prisma
-- Payments: `TestPaymentProvider` / `CodProvider` (`PAYMENT_PROVIDER=test`). Razorpay stubbed.
+| Layer | Tech |
+| --- | --- |
+| Client | Vite, React 19, React Router, Three.js, React Three Fiber, Drei, Zustand, TanStack Query |
+| API | Node, Express, JWT HTTP-only cookies, bcrypt, Helmet, CORS, rate limit |
+| Data | PostgreSQL + Prisma |
+| Payments | `test` / `COD` now; Razorpay stubbed via `PAYMENT_PROVIDER` |
 
-## Prerequisites
+```text
+React + Vite  →  REST /api  →  Express  →  Prisma  →  PostgreSQL
+```
 
-- Node 20+
-- PostgreSQL 17 (Docker optional — `docker-compose.yml` maps **55432**)
+Prices, stock, roles, and compatibility are **never** trusted from the browser.
 
-This Windows workspace does not require Docker. A project-local cluster can live in `.pgdata` (gitignored) on port **55432**.
+## Repository
 
-## Environment
+```text
+client/          Vite storefront + 3D builder
+server/          Express API
+prisma/          schema, migrations, seed
+.env.example     required environment keys
+docker-compose.yml   Postgres 17 on port 55432
+```
 
-Copy `.env.example` to `.env`. Never commit `.env`.
+## Routes
 
-| Variable | Purpose |
-|---|---|
-| `DATABASE_URL` | Prisma connection |
-| `JWT_SECRET` / `JWT_REFRESH_SECRET` | Auth |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Seeded admin |
-| `DEMO_EMAIL` / `DEMO_PASSWORD` | Seeded customer |
-| `GST_RATE` / `DELIVERY_FEE` / `PSU_HEADROOM` | Pricing & power |
-| `PAYMENT_PROVIDER` | `test` \| `cod` \| `razorpay` |
+Public: `/` `/builder` `/prebuilt` `/components` `/gallery` `/about` `/faq` `/contact` `/build/:shareId` `/login` `/register`  
+Account: `/cart` `/checkout` `/dashboard/*` `/order/:id`  
+Admin: `/admin` `/admin/components` `/admin/models` `/admin/orders` …
 
-## PostgreSQL
+## Quick start
 
-### Docker
+```bash
+git clone https://github.com/SanthoshKumarJayakumar/PC.git
+cd PC
+cp .env.example .env   # Windows: copy .env.example .env
+```
 
-```powershell
+Edit `.env` (database URL, JWT secrets, `ADMIN_EMAIL` / `ADMIN_PASSWORD`). Never commit `.env`.
+
+### Database
+
+**Docker**
+
+```bash
 docker compose up -d
 ```
 
-### Local cluster (Windows, no Docker)
+**Windows without Docker** (PostgreSQL 17 installed):
 
 ```powershell
-& "C:\Program Files\PostgreSQL\17\bin\initdb.exe" -D "d:\Website\PC Build\.pgdata" -U kaelon -A trust -E UTF8 --no-locale
-& "C:\Program Files\PostgreSQL\17\bin\pg_ctl.exe" -D "d:\Website\PC Build\.pgdata" -o "-p 55432" -l "d:\Website\PC Build\.pgdata\kaelon.log" start
+& "C:\Program Files\PostgreSQL\17\bin\initdb.exe" -D ".\.pgdata" -U kaelon -A trust -E UTF8 --no-locale
+& "C:\Program Files\PostgreSQL\17\bin\pg_ctl.exe" -D ".\.pgdata" -o "-p 55432" -l ".\.pgdata\kaelon.log" start
 & "C:\Program Files\PostgreSQL\17\bin\createdb.exe" -h localhost -p 55432 -U kaelon kaelon
 ```
 
-After reboot, start the cluster again with `pg_ctl ... start`.
+`DATABASE_URL` in `.env.example` already points at `localhost:55432`.
 
-## Install, migrate, seed
+### Install and run
 
-```powershell
-cd "d:\Website\PC Build"
-copy .env.example .env
+```bash
 npm install
 npx prisma generate
-npx prisma migrate dev --name init
+npx prisma migrate deploy
 npm run db:seed
-```
-
-Seed includes compatible gaming/creator kits **and** intentional mismatches (AG8 CPU vs HX5 board, DDR4 vs DDR5, 336mm GPU vs 250mm case, 650W PSU vs 750W GPU requirement).
-
-## Development
-
-```powershell
 npm run dev
 ```
 
-- Client: http://localhost:5173
-- API health: http://localhost:4000/api/health
+- Site: http://localhost:5173  
+- API: http://localhost:4000/api/health (`db` should be `up`)
 
-Sign in with the admin/demo emails from `.env`.
+Sign in with the admin/demo emails you set in `.env`.
 
-## Tests
+### Scripts
 
-```powershell
-npm test
-```
+| Command | What |
+| --- | --- |
+| `npm run dev` | Client + API |
+| `npm test` | Server + client Vitest |
+| `npm run db:migrate` | Prisma migrate (dev) |
+| `npm run db:seed` | Catalogue + admin/demo users |
+| `npm run build` | Production build |
 
-Backend: compatibility, power, GST, auth guards, health envelope.  
-Frontend: Zustand initial build state.
+Seed data includes matching kits **and** known mismatches (wrong socket, DDR4 on DDR5, GPU too long for a compact case, 650W PSU vs a 750W GPU).
 
-## 3D asset conventions
+## 3D conventions
 
-- Units: **meters**, Y-up, forward −Z
-- Origin: logical **mount point**
-- Scale 1:1 where practical
-- `modelUrl` null → category placeholder mesh
-- Replacement must not remount the Canvas; only the slot node changes
-- Dispose geometries/materials when swapping GLBs
-- Mobile: capped pixel ratio, no extra post-processing
+- Units: metres, Y-up, forward −Z, origin = mount point  
+- No `modelUrl` → procedural part for that category (case, GPU, RAM, fans, …)  
+- Swapping a component must not remount the whole Canvas  
+- Admin: `/admin/models` for position / rotation / scale and optional GLB URL  
 
-Admin: `/admin/models` to edit position/rotation/scale and optional GLB URL.
+## API envelope
 
-## Production
+Success: `{ "success": true, "data": {}, "message": null }`  
+Error: `{ "success": false, "error": { "code": "...", "message": "..." } }`
 
-- Frontend: Vercel / any static host (`npm run build -w client`)
-- Backend: Render / Railway / ECS (`node server/src/index.js`)
-- Set `CLIENT_URL`, `COOKIE_SECURE=true`, strong JWT secrets, managed Postgres
-- `npx prisma migrate deploy && npm run db:seed` (seed only on empty DBs)
+Auth uses HTTP-only cookies (`kaelon_access`, `kaelon_refresh`). Vite proxies `/api` in development.
+
+## Production deploy
+
+**Frontend (Vercel / Netlify / Cloudflare Pages)**
+
+- Build: `npm run build -w client`  
+- Output: `client/dist`  
+- Set the API origin in the client (or reverse-proxy `/api`)
+
+**Backend (Render / Railway / Fly / ECS)**
+
+- Start: `node server/src/index.js`  
+- `npx prisma migrate deploy` on release  
+- Seed only on an empty database  
+
+**Required production env**
+
+`DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `CLIENT_URL`, `COOKIE_SECURE=true`, `NODE_ENV=production`
+
+Do not reuse the example JWT secrets.
 
 ## Troubleshooting
 
 | Symptom | Fix |
-|---|---|
-| `db: down` | Start Postgres on 55432; check `DATABASE_URL` |
-| Auth loops | Ensure Vite proxy `/api` and cookies `sameSite=lax` |
-| Blank 3D | WebGL disabled — lists still work |
-| Invalid config at checkout | Server re-validates; fix highlighted slot |
+| --- | --- |
+| `db: down` | Postgres not running or `DATABASE_URL` wrong |
+| Auth loops | `CLIENT_URL` must match the site origin; cookies `SameSite=Lax` |
+| Blank 3D | WebGL blocked — lists and checkout still work |
+| Checkout rejected | Server found a compatibility or stock error |
+
+## License
+
+Private project unless the repository owner states otherwise.
