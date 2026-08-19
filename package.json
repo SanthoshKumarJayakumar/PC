@@ -1,0 +1,41 @@
+{
+  "name": "kaelon",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Kaelon — 3D custom PC configurator and e-commerce platform",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,magenta \"npm run dev -w server\" \"npm run dev -w client\"",
+    "dev:client": "npm run dev -w client",
+    "dev:server": "npm run dev -w server",
+    "build": "npm run build -w client && npm run build -w server",
+    "test": "npm run test -w server && npm run test -w client",
+    "lint": "npm run lint -w server && npm run lint -w client",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "node prisma/seed.js",
+    "db:studio": "prisma studio"
+  },
+  "prisma": {
+    "schema": "prisma/schema.prisma",
+    "seed": "node prisma/seed.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "prisma": "^6.13.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.13.0",
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^16.4.7",
+    "nanoid": "^5.1.5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

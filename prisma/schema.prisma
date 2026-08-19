@@ -1,0 +1,395 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum OrderStatus {
+  ORDER_RECEIVED
+  CONFIGURATION_REVIEW
+  ASSEMBLY
+  TESTING
+  QUALITY_CHECK
+  PACKAGING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  TEST
+  COD
+  RAZORPAY
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_FOR_CUSTOMER
+  RESOLVED
+  CLOSED
+}
+
+enum CartItemType {
+  BUILD
+  PREBUILT
+  ACCESSORY
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  mobile       String?
+  role         Role     @default(CUSTOMER)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  refreshTokens    RefreshToken[]
+  passwordResets   PasswordReset[]
+  configurations   Configuration[]
+  savedBuilds      SavedBuild[]
+  cart             Cart?
+  addresses        Address[]
+  orders           Order[]
+  tickets          SupportTicket[]
+  reviews          Review[]
+  assignedTickets  SupportTicket[] @relation("AssignedTickets")
+
+  @@index([role])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Category {
+  id          String      @id @default(cuid())
+  slug        String      @unique
+  name        String
+  sortOrder   Int         @default(0)
+  required    Boolean     @default(true)
+  components  Component[]
+}
+
+model Component {
+  id                     String   @id @default(cuid())
+  sku                    String   @unique
+  name                   String
+  slug                   String   @unique
+  brand                  String
+  categoryId             String
+  description            String   @default("")
+  price                  Decimal  @db.Decimal(12, 2)
+  image                  String?
+  specifications         Json
+  compatibilityMetadata  Json
+  dimensions             Json
+  powerConsumption       Int      @default(0)
+  weightGrams            Int      @default(0)
+  active                 Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  category     Category                  @relation(fields: [categoryId], references: [id])
+  inventory    Inventory?
+  models       Component3DModel[]
+  configParts  ConfigurationComponent[]
+  orderItems   OrderItem[]
+  cartItems    CartItem[]
+  reviews      Review[]
+
+  @@index([categoryId])
+  @@index([brand])
+  @@index([active])
+  @@index([price])
+}
+
+model Component3DModel {
+  id                  String   @id @default(cuid())
+  componentId         String
+  modelUrl            String?
+  thumbnailUrl        String?
+  positionX           Float    @default(0)
+  positionY           Float    @default(0)
+  positionZ           Float    @default(0)
+  rotationX           Float    @default(0)
+  rotationY           Float    @default(0)
+  rotationZ           Float    @default(0)
+  scaleX              Float    @default(1)
+  scaleY              Float    @default(1)
+  scaleZ              Float    @default(1)
+  assembledTransform  Json
+  explodedTransform   Json
+  mountPoint          String?
+  boundingBox         Json?
+  orientation         String?
+  modelVersion        String   @default("1")
+  fileSize            Int      @default(0)
+  active              Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  component Component @relation(fields: [componentId], references: [id], onDelete: Cascade)
+
+  @@index([componentId])
+}
+
+model CompatibilityRule {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  params    Json
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Inventory {
+  id                 String    @id @default(cuid())
+  componentId        String    @unique
+  stock              Int       @default(0)
+  reserved           Int       @default(0)
+  lowStockThreshold  Int       @default(3)
+  updatedAt          DateTime  @updatedAt
+  component          Component @relation(fields: [componentId], references: [id], onDelete: Cascade)
+}
+
+model Configuration {
+  id                String   @id @default(cuid())
+  userId            String?
+  name              String   @default("Untitled build")
+  shareId           String   @unique
+  rgb               Json
+  isPublic          Boolean  @default(false)
+  isPrebuilt        Boolean  @default(false)
+  prebuiltCategory  String?
+  featured          Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user       User?                      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  parts      ConfigurationComponent[]
+  savedBy    SavedBuild[]
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@index([userId])
+  @@index([shareId])
+  @@index([isPrebuilt, featured])
+}
+
+model ConfigurationComponent {
+  id              String @id @default(cuid())
+  configurationId String
+  componentId     String
+  slot            String
+  quantity        Int    @default(1)
+  sortOrder       Int    @default(0)
+
+  configuration Configuration @relation(fields: [configurationId], references: [id], onDelete: Cascade)
+  component     Component     @relation(fields: [componentId], references: [id])
+
+  @@unique([configurationId, slot, sortOrder])
+  @@index([componentId])
+}
+
+model SavedBuild {
+  id              String   @id @default(cuid())
+  userId          String
+  configurationId String
+  name            String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  configuration Configuration @relation(fields: [configurationId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  updatedAt DateTime   @updatedAt
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+}
+
+model CartItem {
+  id              String       @id @default(cuid())
+  cartId          String
+  type            CartItemType
+  configurationId String?
+  componentId     String?
+  quantity        Int          @default(1)
+  createdAt       DateTime     @default(now())
+
+  cart          Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  configuration Configuration? @relation(fields: [configurationId], references: [id], onDelete: SetNull)
+  component     Component?     @relation(fields: [componentId], references: [id], onDelete: SetNull)
+}
+
+model Address {
+  id         String  @id @default(cuid())
+  userId     String
+  label      String  @default("Home")
+  line1      String
+  line2      String  @default("")
+  city       String
+  state      String
+  pincode    String
+  phone      String
+  isDefault  Boolean @default(false)
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@index([userId])
+}
+
+model Order {
+  id              String        @id @default(cuid())
+  orderNumber     String        @unique
+  userId          String
+  addressId       String?
+  status          OrderStatus   @default(ORDER_RECEIVED)
+  paymentStatus   PaymentStatus @default(PENDING)
+  subtotal        Decimal       @db.Decimal(12, 2)
+  gst             Decimal       @db.Decimal(12, 2)
+  delivery        Decimal       @db.Decimal(12, 2)
+  discount        Decimal       @db.Decimal(12, 2) @default(0)
+  total           Decimal       @db.Decimal(12, 2)
+  couponCode      String?
+  trackingNumber  String?
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user     User                 @relation(fields: [userId], references: [id])
+  address  Address?             @relation(fields: [addressId], references: [id])
+  items    OrderItem[]
+  history  OrderStatusHistory[]
+  payment  Payment?
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OrderItem {
+  id                String  @id @default(cuid())
+  orderId           String
+  configurationId   String?
+  componentId       String?
+  name              String
+  sku               String
+  quantity          Int
+  unitPrice         Decimal @db.Decimal(12, 2)
+  snapshot          Json
+
+  order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  configuration Configuration? @relation(fields: [configurationId], references: [id], onDelete: SetNull)
+  component     Component?     @relation(fields: [componentId], references: [id], onDelete: SetNull)
+}
+
+model OrderStatusHistory {
+  id        String      @id @default(cuid())
+  orderId   String
+  status    OrderStatus
+  note      String?
+  createdAt DateTime    @default(now())
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  orderId   String        @unique
+  provider  PaymentMethod
+  status    PaymentStatus @default(PENDING)
+  amount    Decimal       @db.Decimal(12, 2)
+  reference String?
+  raw       Json?
+  createdAt DateTime      @default(now())
+  order     Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model SupportTicket {
+  id         String        @id @default(cuid())
+  userId     String
+  assigneeId String?
+  category   String
+  subject    String
+  status     TicketStatus  @default(OPEN)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignee User?             @relation("AssignedTickets", fields: [assigneeId], references: [id])
+  messages SupportMessage[]
+}
+
+model SupportMessage {
+  id        String   @id @default(cuid())
+  ticketId  String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  userId      String
+  componentId String?
+  rating      Int
+  title       String
+  body        String
+  createdAt   DateTime @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  component   Component? @relation(fields: [componentId], references: [id], onDelete: SetNull)
+}
+
+model Coupon {
+  id         String    @id @default(cuid())
+  code       String    @unique
+  percentOff Int?
+  amountOff  Decimal?  @db.Decimal(12, 2)
+  active     Boolean   @default(true)
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+}

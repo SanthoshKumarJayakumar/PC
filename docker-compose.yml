@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: kaelon
+      POSTGRES_PASSWORD: kaelon
+      POSTGRES_DB: kaelon
+    ports:
+      - "55432:5432"
+    volumes:
+      - kaelon_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kaelon"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  kaelon_pg:

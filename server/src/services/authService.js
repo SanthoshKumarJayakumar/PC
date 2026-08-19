@@ -1,0 +1,54 @@
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { env } from "../config/env.js";
+import { prisma } from "../lib/prisma.js";
+
+const cookieOpts = {
+  httpOnly: true,
+  secure: env.cookieSecure,
+  sameSite: env.sameSite,
+  path: "/",
+};
+
+export function signAccess(user) {
+  return jwt.sign({ sub: user.id, role: user.role }, env.jwtSecret, { expiresIn: env.accessExp });
+}
+
+export function signRefresh(user) {
+  return jwt.sign({ sub: user.id, typ: "refresh" }, env.jwtRefresh, { expiresIn: env.refreshExp });
+}
+
+export function setAuthCookies(res, access, refresh) {
+  res.cookie("kaelon_access", access, { ...cookieOpts, maxAge: 15 * 60 * 1000 });
+  res.cookie("kaelon_refresh", refresh, { ...cookieOpts, maxAge: 7 * 24 * 60 * 60 * 1000 });
+}
+
+export function clearAuthCookies(res) {
+  res.clearCookie("kaelon_access", { path: "/" });
+  res.clearCookie("kaelon_refresh", { path: "/" });
+}
+
+export function publicUser(user) {
+  return {
+    id: user.id,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    mobile: user.mobile,
+    role: user.role,
+  };
+}
+
+export async function hashPassword(password) {
+  return bcrypt.hash(password, 12);
+}
+
+export async function verifyPassword(password, hash) {
+  return bcrypt.compare(password, hash);
+}
+
+export async function persistRefresh(userId, token) {
+  const tokenHash = await bcrypt.hash(token, 10);
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  await prisma.refreshToken.create({ data: { userId, tokenHash, expiresAt } });
+}
