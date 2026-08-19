@@ -112,12 +112,14 @@ Auth uses HTTP-only cookies (`kaelon_access`, `kaelon_refresh`). Vite proxies `/
 
 **Frontend (Vercel)**
 
-This repo includes `vercel.json`:
+Two valid setups:
 
-- Build command: `npm run build -w client`
-- Output directory: `client/dist` (not `public`)
+1. **Root Directory empty** (recommended) — uses repo-root `vercel.json`, output `client/dist`.
+2. **Root Directory = `client`** — uses `client/vercel.json`, output `dist`. Do **not** use `npm run build -w client` in this mode.
 
-Leave **Root Directory** empty (repo root). After the GitHub push, Vercel will pick this up automatically. Catalog/auth still need a separately hosted API (`CLIENT_URL` on the server must match the Vercel domain).
+The Hobby plan only deploys commits authored by the Vercel project owner on a private repo.
+
+Catalog/auth still need a separately hosted API. `CLIENT_URL` on the server must match the Vercel domain.
 
 **Backend (Render / Railway / Fly / ECS)**
 
