@@ -110,11 +110,14 @@ Auth uses HTTP-only cookies (`kaelon_access`, `kaelon_refresh`). Vite proxies `/
 
 ## Production deploy
 
-**Frontend (Vercel / Netlify / Cloudflare Pages)**
+**Frontend (Vercel)**
 
-- Build: `npm run build -w client`  
-- Output: `client/dist`  
-- Set the API origin in the client (or reverse-proxy `/api`)
+This repo includes `vercel.json`:
+
+- Build command: `npm run build -w client`
+- Output directory: `client/dist` (not `public`)
+
+Leave **Root Directory** empty (repo root). After the GitHub push, Vercel will pick this up automatically. Catalog/auth still need a separately hosted API (`CLIENT_URL` on the server must match the Vercel domain).
 
 **Backend (Render / Railway / Fly / ECS)**
 
