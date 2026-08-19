@@ -12,8 +12,8 @@ async function start() {
   } catch (e) {
     console.warn("PostgreSQL unavailable — API will start but data routes will fail:", e.message);
   }
-  app.listen(env.port, () => {
-    console.log(`Kaelon API http://localhost:${env.port} db=${db}`);
+  app.listen(env.port, "0.0.0.0", () => {
+    console.log(`Kaelon API listening on ${env.port} db=${db}`);
   });
 }
 

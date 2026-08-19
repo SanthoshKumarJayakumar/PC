@@ -145,10 +145,21 @@ The browser and the API are on different domains, so both sides must know each o
    | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | your admin login |
    | `PORT` | leave unset — Render injects it |
 
-3. Render start command: `npx prisma migrate deploy && npx prisma generate && node server/src/index.js`  
-   Seed once on an empty database: `npm run db:seed`
+3. Create a **Web Service** (Node), not a Static Site. Root Directory empty. Then:
 
-4. Check the join: open `https://your-service.onrender.com/api/health` (`db` should be `up`), then reload the Vercel site. Catalog and login should hit Render.
+   | Setting | Value |
+   | --- | --- |
+   | Build | `npm install && npx prisma generate` |
+   | Start | `npx prisma migrate deploy && node server/src/index.js` |
+
+   Seed once on an empty database from the Render shell: `npm run db:seed`
+
+4. Live pair:
+
+   - Site: https://pc-build-delta.vercel.app
+   - API: https://pc-build-gcq9.onrender.com/api/health (`db` should be `up`)
+
+   `x-render-routing: no-deploy` means the service URL exists but no successful deploy has run. Fix the commands above and click **Manual Deploy**.
 
 Do not reuse the example JWT secrets. Never commit `.env`.
 
