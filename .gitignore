@@ -12,6 +12,7 @@ server/uploads/
 client/dist/
 .vscode/
 .idea/
+.cursor/
 *.tmp
 prisma/*.db
 .turbo

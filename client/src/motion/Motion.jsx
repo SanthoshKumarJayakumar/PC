@@ -90,16 +90,6 @@ export function SplitTitle({ text, as: Tag = "h1" }) {
   );
 }
 
-export function HoverLift({ children, className }) {
-  const reduce = useReducedMotion();
-  if (reduce) return <div className={className}>{children}</div>;
-  return (
-    <motion.div className={className} whileHover={{ y: -8 }} transition={{ duration: 0.28, ease }}>
-      {children}
-    </motion.div>
-  );
-}
-
 export function Magnet({ children, strength = 0.28, className }) {
   const reduce = useReducedMotion();
   const ref = useRef(null);

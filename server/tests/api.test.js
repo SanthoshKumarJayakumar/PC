@@ -12,6 +12,13 @@ describe("http envelope", () => {
     expect(res.body.data.service).toBe("kaelon-api");
   });
 
+  it("session check is 200 when signed out", async () => {
+    const res = await request(app).get("/api/auth/me");
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.user).toBeNull();
+  });
+
   it("rejects unauthenticated cart", async () => {
     const res = await request(app).get("/api/cart");
     expect(res.status).toBe(401);
