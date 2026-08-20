@@ -52,3 +52,26 @@ export async function persistRefresh(userId, token) {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   await prisma.refreshToken.create({ data: { userId, tokenHash, expiresAt } });
 }
+
+/** Rotate cookies from a valid refresh token. Returns the user, or null. */
+export async function rotateRefreshSession(token, res) {
+  if (!token) return null;
+  try {
+    const payload = jwt.verify(token, env.jwtRefresh);
+    const user = await prisma.user.findUnique({ where: { id: payload.sub } });
+    if (!user?.active) return null;
+    const stored = await prisma.refreshToken.findMany({ where: { userId: user.id } });
+    let valid = false;
+    for (const row of stored) {
+      if (await bcrypt.compare(token, row.tokenHash)) valid = true;
+    }
+    if (!valid) return null;
+    const access = signAccess(user);
+    const refresh = signRefresh(user);
+    await persistRefresh(user.id, refresh);
+    setAuthCookies(res, access, refresh);
+    return user;
+  } catch {
+    return null;
+  }
+}

@@ -13,10 +13,14 @@ export const api = axios.create({
   withCredentials: true,
 });
 
+const skipRefreshRetry = ["/auth/login", "/auth/register", "/auth/refresh", "/auth/logout", "/auth/forgot-password"];
+
 api.interceptors.response.use(
   (r) => r,
   async (err) => {
-    if (err.response?.status === 401 && !err.config?._retry && !err.config?.url?.includes("/auth/")) {
+    const url = String(err.config?.url || "");
+    const skip = skipRefreshRetry.some((path) => url.includes(path));
+    if (err.response?.status === 401 && !err.config?._retry && !skip) {
       err.config._retry = true;
       try {
         await api.post("/auth/refresh");

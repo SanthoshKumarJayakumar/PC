@@ -1,13 +1,12 @@
 import { Router } from "express";
 import { body } from "express-validator";
-import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { nanoid } from "nanoid";
 import { prisma } from "../lib/prisma.js";
 import { ok, fail } from "../lib/http.js";
 import { env } from "../config/env.js";
 import { validate } from "../middleware/validate.js";
-import { requireAuth } from "../middleware/auth.js";
+import { optionalAuth, requireAuth } from "../middleware/auth.js";
 import {
   hashPassword,
   verifyPassword,
@@ -17,6 +16,7 @@ import {
   clearAuthCookies,
   publicUser,
   persistRefresh,
+  rotateRefreshSession,
 } from "../services/authService.js";
 
 export const authRouter = Router();
@@ -86,29 +86,20 @@ authRouter.post("/logout", requireAuth, async (req, res, next) => {
   }
 });
 
-authRouter.get("/me", requireAuth, (req, res) => ok(res, { user: publicUser(req.user) }));
+authRouter.get("/me", optionalAuth, async (req, res, next) => {
+  try {
+    let user = req.user?.active ? req.user : null;
+    if (!user) user = await rotateRefreshSession(req.cookies?.kaelon_refresh, res);
+    return ok(res, { user: user ? publicUser(user) : null });
+  } catch (e) {
+    next(e);
+  }
+});
 
 authRouter.post("/refresh", async (req, res) => {
-  const token = req.cookies?.kaelon_refresh;
-  if (!token) return fail(res, "UNAUTHENTICATED", "No refresh token.", 401);
-  try {
-    const payload = jwt.verify(token, env.jwtRefresh);
-    const user = await prisma.user.findUnique({ where: { id: payload.sub } });
-    if (!user?.active) return fail(res, "UNAUTHENTICATED", "Account unavailable.", 401);
-    const tokens = await prisma.refreshToken.findMany({ where: { userId: user.id } });
-    let valid = false;
-    for (const t of tokens) {
-      if (await bcrypt.compare(token, t.tokenHash)) valid = true;
-    }
-    if (!valid) return fail(res, "UNAUTHENTICATED", "Refresh token revoked.", 401);
-    const access = signAccess(user);
-    const refresh = signRefresh(user);
-    await persistRefresh(user.id, refresh);
-    setAuthCookies(res, access, refresh);
-    return ok(res, { user: publicUser(user) });
-  } catch {
-    return fail(res, "UNAUTHENTICATED", "Invalid refresh token.", 401);
-  }
+  const user = await rotateRefreshSession(req.cookies?.kaelon_refresh, res);
+  if (!user) return fail(res, "UNAUTHENTICATED", "Invalid refresh token.", 401);
+  return ok(res, { user: publicUser(user) });
 });
 
 authRouter.post("/forgot-password", body("email").isEmail(), validate, async (req, res, next) => {
