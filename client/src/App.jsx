@@ -33,7 +33,7 @@ export default function App() {
     <QueryClientProvider client={qc}>
       <AuthProvider>
         <BrowserRouter>
-          <Suspense fallback={<div className="page muted">Loading…</div>}>
+          <Suspense fallback={<div className="page-loader muted">LOADING KAELON…</div>}>
             <Routes>
               <Route element={<Layout />}>
                 <Route path="/" element={<Home />} />

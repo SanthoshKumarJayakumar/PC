@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { api } from "../services/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { Seo } from "../components/Seo.jsx";
+import { Reveal } from "../motion/Motion.jsx";
 
 export function Login() {
   const { refresh, setUser } = useAuth();
@@ -21,7 +22,7 @@ export function Login() {
     }
   }
   return (
-    <div className="page">
+    <Reveal className="page">
       <Seo title="Sign in" />
       <h1>Sign in</h1>
       {err && <div className="alert error">{err}</div>}
@@ -31,7 +32,7 @@ export function Login() {
         <button className="btn-primary" type="submit">Sign in</button>
       </form>
       <p className="muted"><Link to="/register">Create account</Link></p>
-    </div>
+    </Reveal>
   );
 }
 
@@ -59,7 +60,7 @@ export function Register() {
     }
   }
   return (
-    <div className="page">
+    <Reveal className="page">
       <Seo title="Register" />
       <h1>Create account</h1>
       {err && <div className="alert error">{err}</div>}
@@ -72,6 +73,6 @@ export function Register() {
         <input name="confirmPassword" type="password" placeholder="Confirm password" required />
         <button className="btn-primary" type="submit">Register</button>
       </form>
-    </div>
+    </Reveal>
   );
 }

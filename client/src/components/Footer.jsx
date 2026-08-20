@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
+import { Reveal } from "../motion/Motion.jsx";
 
 export function Footer() {
   return (
+    <Reveal>
     <footer className="site-footer">
       <div className="footer-grid">
         <div>
@@ -29,5 +31,6 @@ export function Footer() {
       </div>
       <p className="muted footer-copy">© {new Date().getFullYear()} Kaelon Systems. Original brand — not affiliated with any other PC retailer.</p>
     </footer>
+    </Reveal>
   );
 }

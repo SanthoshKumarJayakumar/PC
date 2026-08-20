@@ -16,12 +16,4 @@ if (process.env.RENDER) {
   process.exit(0);
 }
 
-run("npx", [
-  "concurrently",
-  "-n",
-  "api,web",
-  "-c",
-  "cyan,magenta",
-  "npm run dev -w server",
-  "npm run dev -w client",
-]);
+run("npm", ["run", "dev:local"]);

@@ -59,13 +59,13 @@ function Scene({ autoRotate }) {
 
   return (
     <>
-      <color attach="background" args={["#07080b"]} />
-      <fog attach="fog" args={["#07080b", 1.4, 3.2]} />
-      <ambientLight intensity={0.22} />
-      <spotLight position={[0.9, 1.4, 0.6]} intensity={2.8} angle={0.42} penumbra={0.65} castShadow shadow-mapSize={1024} />
-      <spotLight position={[-0.6, 0.8, -0.4]} intensity={0.55} color="#6ea2ff" />
-      <pointLight position={[0.2, 0.05, 0.1]} intensity={rgb.enabled ? 1.2 : 0.2} color={rgb.color} distance={1.2} />
-      <Environment preset="city" environmentIntensity={0.28} />
+      <color attach="background" args={["#eef1f5"]} />
+      <fog attach="fog" args={["#eef1f5", 2.2, 4.6]} />
+      <ambientLight intensity={0.78} />
+      <spotLight position={[0.9, 1.4, 0.6]} intensity={1.55} angle={0.42} penumbra={0.7} castShadow shadow-mapSize={1024} />
+      <spotLight position={[-0.6, 0.8, -0.4]} intensity={0.45} color="#6ea2ff" />
+      <pointLight position={[0.2, 0.05, 0.1]} intensity={rgb.enabled ? 0.9 : 0.15} color={rgb.color} distance={1.2} />
+      <Environment preset="studio" environmentIntensity={0.55} />
       <group position={[0, -0.02, 0]}>
         {SLOTS.map((slot) => (
           <ComponentModel
@@ -76,7 +76,7 @@ function Scene({ autoRotate }) {
           />
         ))}
       </group>
-      <ContactShadows position={[0, -0.25, 0]} opacity={0.55} scale={1.6} blur={2.4} far={0.8} />
+      <ContactShadows position={[0, -0.25, 0]} opacity={0.28} scale={1.6} blur={2.5} far={0.8} color="#8a919c" />
       <OrbitControls makeDefault enableDamping dampingFactor={0.08} autoRotate={false} minDistance={0.4} maxDistance={1.8} maxPolarAngle={Math.PI / 1.7} />
       <CameraRig autoRotate={autoRotate} />
       <PerspectiveCamera makeDefault fov={38} position={[0.62, 0.18, 0.42]} />

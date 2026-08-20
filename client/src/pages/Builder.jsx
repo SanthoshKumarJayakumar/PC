@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useBuildStore } from "../store/buildStore.js";
 import { PCViewer } from "../three/PCViewer/PCViewer.jsx";
 import { Seo } from "../components/Seo.jsx";
+import { AnimatePresence, motion } from "motion/react";
 
 const SLOTS = ["cpu", "motherboard", "ram", "gpu", "storage", "cooler", "cabinet", "psu", "fans"];
 
@@ -79,7 +80,7 @@ export function Builder() {
             <strong>Components</strong>
             <span className="muted">{completion.done}/{completion.total}</span>
           </div>
-          <div className="filters">
+          <div className="filters slot-filters">
             {SLOTS.map((s) => (
               <button key={s} className={s === selectedSlot ? "btn-primary" : "btn"} onClick={() => setSlot(s)}>
                 {s} {components[s] ? "✓" : ""}
@@ -105,7 +106,7 @@ export function Builder() {
             })}
           </div>
         </aside>
-        <div style={{ position: "relative" }}>
+        <div className="builder-stage">
           <PCViewer />
           <div className="toolbar">
             {["default", "front", "back", "left", "right", "top"].map((p) => (
@@ -157,7 +158,13 @@ export function Builder() {
           <button className="btn-ghost" onClick={validate}>Re-validate</button>
         </aside>
       </div>
-      {toast && <div className="toast">{toast}</div>}
+      <AnimatePresence>
+        {toast && (
+          <motion.div className="toast" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }}>
+            {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
