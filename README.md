@@ -6,13 +6,23 @@ Premium 3D custom-PC configurator and storefront.
 
 Pick a part → the glass-side PC updates in 3D → the server checks compatibility, wattage, and GST → save, share, or checkout.
 
+Light storefront, ink type, cyan accent (`#00eaff` / `#4df0ff`). Layouts adapt from phones through tablets to desktops. Motion is used for page fades, card glare, magnetic CTAs, and click sparks; `prefers-reduced-motion` turns those effects off.
+
 NukePC inspired the **workflow** only. Branding, copy, SKUs, and 3D meshes are original. There are no licensed manufacturer GLBs in this repo; the viewer uses a detailed procedural rig until you attach production models in admin.
+
+## Live
+
+- Site: [https://pc-build-delta.vercel.app](https://pc-build-delta.vercel.app)
+- API health: [https://pc-build-gcq9.onrender.com/api/health](https://pc-build-gcq9.onrender.com/api/health)
+
+Repos: [mrrokesh/PC-Build](https://github.com/mrrokesh/PC-Build) · [SanthoshKumarJayakumar/PC](https://github.com/SanthoshKumarJayakumar/PC)
 
 ## Stack
 
 | Layer | Tech |
 | --- | --- |
 | Client | Vite, React 19, React Router, Three.js, React Three Fiber, Drei, Zustand, TanStack Query |
+| UI | Tailwind CSS v4, shadcn (nova), Lucide, Motion, GSAP |
 | API | Node, Express, JWT HTTP-only cookies, bcrypt, Helmet, CORS, rate limit |
 | Data | PostgreSQL + Prisma |
 | Payments | `test` / `COD` now; Razorpay stubbed via `PAYMENT_PROVIDER` |
@@ -22,6 +32,13 @@ React + Vite  →  REST /api  →  Express  →  Prisma  →  PostgreSQL
 ```
 
 Prices, stock, roles, and compatibility are **never** trusted from the browser.
+
+## Storefront
+
+- **Builder** — three columns on desktop (parts · 3D · summary). On smaller screens the 3D stage stacks first, then parts, then the bill.
+- **Nav** — full links on wide screens; hamburger icon under ~1200px.
+- **Catalog** — category chips stay put; switching parts shows a short skeleton shimmer, then the grid fades in.
+- **Motion** — split hero title, magnetic primary buttons, glare/tilt on product cards, cyan click sparks (not on the 3D canvas).
 
 ## Repository
 
@@ -77,6 +94,8 @@ npm run db:seed
 npm run dev
 ```
 
+`npm run dev` starts the API and Vite together via `dev:local` (needed on Windows). If `RENDER=true`, the same script starts the production API only so Vite cannot OOM a small instance.
+
 - Site: http://localhost:5173  
 - API: http://localhost:4000/api/health (`db` should be `up`)
 
@@ -86,7 +105,8 @@ Sign in with the admin/demo emails you set in `.env`.
 
 | Command | What |
 | --- | --- |
-| `npm run dev` | Client + API |
+| `npm run dev` | Client + API locally; API only on Render |
+| `npm start` | Prisma migrate + production API |
 | `npm test` | Server + client Vitest |
 | `npm run db:migrate` | Prisma migrate (dev) |
 | `npm run db:seed` | Catalogue + admin/demo users |
@@ -136,7 +156,7 @@ The browser and the API are on different domains, so both sides must know each o
    | Key | Value |
    | --- | --- |
    | `NODE_ENV` | `production` |
-   | `DATABASE_URL` | Render Postgres URL |
+   | `DATABASE_URL` | Render Postgres URL (Neon: unpooled host; drop `channel_binding=require` if the driver fails) |
    | `CLIENT_URL` | Exact Vercel origin, e.g. `https://your-app.vercel.app` (no trailing slash). Add more with commas if you use a custom domain. |
    | `JWT_SECRET` | long random string (not the example) |
    | `JWT_REFRESH_SECRET` | different long random string |
@@ -150,7 +170,7 @@ The browser and the API are on different domains, so both sides must know each o
    | Setting | Value |
    | --- | --- |
    | Build | `npm install && npx prisma generate` |
-   | Start | `npx prisma migrate deploy && node server/src/index.js` |
+   | Start | `npm start` (`npx prisma migrate deploy && node server/src/index.js`) |
 
    Seed once on an empty database from the Render shell: `npm run db:seed`
 
@@ -169,11 +189,12 @@ Do not reuse the example JWT secrets. Never commit `.env`.
 | --- | --- |
 | Render OOM / Vite on `:5173` | Start command is `npm run dev`. Set it to `npm start` (API only). Do not run Vite on Render. |
 | `db: down` | Postgres not running or `DATABASE_URL` wrong |
-| Auth loops | `CLIENT_URL` must match the site origin; cookies `SameSite=Lax` |
+| Auth loops (local) | `CLIENT_URL` must match the site origin; cookies `SameSite=Lax` |
+| Auth loops (Vercel + Render) | `COOKIE_SAMESITE=none` and `COOKIE_SECURE=true` |
 | Blank 3D | WebGL blocked — lists and checkout still work |
 | Checkout rejected | Server found a compatibility or stock error |
+| Components page looks empty | API down, or wait for the skeleton then grid fade |
 
 ## License
 
 See [LICENSE](./LICENSE). Private project unless the repository owner states otherwise.
-
